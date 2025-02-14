@@ -11,25 +11,33 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: composite
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v2
+    - name: Setup Rust
+      uses: dtolnay/rust-toolchain@stable
 
-      - name: Set Up Rust Toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
+    - name: Add wasm32-unknown-unknown target
+      shell: bash
+      run: rustup target add wasm32-unknown-unknown
 
-      - name: Install forc and fuel-core
-        run: |
-          cargo install forc --locked
-          cargo install fuel-core --locked
+    - name: Setup Fuelup
+      shell: bash
+      run: |
+        curl https://install.fuel.network | sh
+        echo "$HOME/.fuelup/bin:${GITHUB_PATH}" >> $GITHUB_PATH
 
-      - name: Build Project
-        run: forc build
+    - name: Set default testnet toolchain
+      shell: bash
+      run: |
+        fuelup update
+        fuelup toolchain install testnet
+        fuelup default testnet
 
-      - name: Run Tests
-        run: forc test
+    - name: Build the contracts
+      shell: bash
+      run: forc build
+
+    - name: Cargo build
+      shell: bash
+      run: cargo build
