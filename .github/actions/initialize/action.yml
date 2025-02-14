@@ -1,4 +1,5 @@
-name: Initialize Sway Environment
+name: Initialize
+description: Common steps for initialization
 
 runs:
   using: composite
@@ -23,7 +24,11 @@ runs:
         fuelup update
         fuelup toolchain install testnet
         fuelup default testnet
-        
+
     - name: Build the contracts
-        shell: bash
-        run: forc build
+      shell: bash
+      run: forc build
+
+    - name: Cargo build
+      shell: bash
+      run: cargo build
