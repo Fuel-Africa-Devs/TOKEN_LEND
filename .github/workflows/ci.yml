@@ -1,0 +1,35 @@
+name: Sway Smart Contract CI
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Set Up Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          override: true
+
+      - name: Install forc and fuel-core
+        run: |
+          cargo install forc --locked
+          cargo install fuel-core --locked
+
+      - name: Build Project
+        run: forc build
+
+      - name: Run Tests
+        run: forc test
