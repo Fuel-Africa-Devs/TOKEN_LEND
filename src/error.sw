@@ -1,5 +1,7 @@
 library;
-
+pub enum List {
+    AssetAmountMismatch:(),
+}
 pub enum Borrow {
     CollateralMisMatch: (),
     AssetIdMismatch: (),

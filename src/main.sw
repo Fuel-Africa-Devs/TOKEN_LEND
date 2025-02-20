@@ -20,7 +20,7 @@ use std::{
 use ::data_structures::{borrow::BorrowInfo, listing::Listing};
 use ::interfaces::{NftInfo, NftLend};
 use ::events::{Borrowed, Listed, Reclaimed, Repayed};
-use ::error::{Borrow, Repay};
+use ::error::{Borrow, Repay, List};
 storage {
     listings: StorageMap<(AssetId, u64), Listing> = StorageMap {},
     borrowed: StorageMap<(AssetId, u64), BorrowInfo> = StorageMap {},
@@ -31,7 +31,7 @@ storage {
 }
 // deposit nft use transfer , depositing src20 use payable
 impl NftLend for Contract {
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn list_nft(
         asset_id: AssetId,
         nft_id: u64, //or sub_id
@@ -42,6 +42,10 @@ impl NftLend for Contract {
         let lender = msg_sender().unwrap();
         let contract_id: ContractId = ContractId::this(); // get contract id <--sheeeh->
         let identity_from_contract_id = Identity::ContractId(contract_id);
+        require(
+                    nft_id == msg_amount(),
+                    List::AssetAmountMismatch,
+                );
         match lender {
             Identity::Address(lender_address) => {
                 let new_listing = Listing::new(
@@ -61,7 +65,7 @@ impl NftLend for Contract {
                     .count_to_listing
                     .insert(storage.listing_count.read(), (asset_id, nft_id));
                 // tranfer nft to this contract
-                transfer(identity_from_contract_id, asset_id, nft_id);
+                // transfer(identity_from_contract_id, asset_id, nft_id);
                 log(Listed {
                     lender: lender_address,
                     asset_id: asset_id,
@@ -134,59 +138,59 @@ impl NftLend for Contract {
     #[storage(read, write), payable]
     fn return_nft(asset_id: AssetId, nft_id: u64) -> bool {
         let borrowed = storage.borrowed.get((asset_id, nft_id)).try_read();
-        let mut listings_borrowed = storage.listings.get((asset_id, nft_id)).try_read().unwrap();
+        let mut listings_borrowed = storage.listings.get((asset_id, nft_id)).try_read().unwrap_or_default();
         match borrowed {
             Some(borrowed_data) => {
-                let mut borrowed_data = borrowed_data;
-                require(
-                    borrowed_data
-                        .expiration <= height()
-                        .as_u64(),
-                    Repay::BorrowedTImePassed,
-                );
-                let duration = {
-                    if (height().as_u64() > borrowed_data.expiration) {
-                        borrowed_data.expiration
-                    } else {
-                        height().as_u64() - borrowed_data.starting
-                    }
-                };
-                let total_cost_in_time = listings_borrowed.price_per_block * duration; // cost duration
-                let borrower = Identity::Address(borrowed_data.borrower);
-                require(total_cost_in_time == msg_amount(), Repay::IncorrectInterest);
-                require(
-                    listings_borrowed
-                        .asset_id == asset_id,
-                    Repay::AssetIdMismatch,
-                );
-                listings_borrowed.active = true;
-                borrowed_data.collateral = 0;
-                transfer(
-                    borrower,
-                    listings_borrowed
-                        .collateral_asset_id,
-                    listings_borrowed
-                        .collateral_amount,
-                ); // transfer collateral to borrower
-                transfer(
-                    Identity::Address(listings_borrowed.lender),
-                    listings_borrowed
-                        .collateral_asset_id,
-                    total_cost_in_time,
-                ); // transfer interest to lender
-                storage.borrowed.insert((asset_id, nft_id), borrowed_data);
-                storage
-                    .listings
-                    .insert((asset_id, nft_id), listings_borrowed);
-                // // storage.count_to_borrow.write(storage.listing_count.read(),borrower_info);
-                // storage.count_to_listing.write(storage.listing_count.read(),(asset_id, nft_id) );
-                log(Repayed {
-                    lender: listings_borrowed.lender,
-                    borrower: borrowed_data.borrower,
-                    amount_repayed: total_cost_in_time, // Required collateral
-                    collateral: borrowed_data.collateral,
-                    collateral_asset_id: listings_borrowed.collateral_asset_id,
-                });
+                // let mut borrowed_data = borrowed_data;
+                // require(
+                //     borrowed_data
+                //         .expiration <= height()
+                //         .as_u64(),
+                //     Repay::BorrowedTImePassed,
+                // );
+                // let duration = {
+                //     if (height().as_u64() > borrowed_data.expiration) {
+                //         borrowed_data.expiration
+                //     } else {
+                //         height().as_u64() - borrowed_data.starting
+                //     }
+                // };
+                // let total_cost_in_time = listings_borrowed.price_per_block * duration; // cost duration
+                // let borrower = Identity::Address(borrowed_data.borrower);
+                // require(total_cost_in_time == msg_amount(), Repay::IncorrectInterest);
+                // require(
+                //     listings_borrowed
+                //         .asset_id == asset_id,
+                //     Repay::AssetIdMismatch,
+                // );
+                // listings_borrowed.active = true;
+                // borrowed_data.collateral = 0;
+                // transfer(
+                //     borrower,
+                //     listings_borrowed
+                //         .collateral_asset_id,
+                //     listings_borrowed
+                //         .collateral_amount,
+                // ); // transfer collateral to borrower
+                // transfer(
+                //     Identity::Address(listings_borrowed.lender),
+                //     listings_borrowed
+                //         .collateral_asset_id,
+                //     total_cost_in_time,
+                // ); // transfer interest to lender
+                // storage.borrowed.insert((asset_id, nft_id), borrowed_data);
+                // storage
+                //     .listings
+                //     .insert((asset_id, nft_id), listings_borrowed);
+                // // // storage.count_to_borrow.write(storage.listing_count.read(),borrower_info);
+                // // storage.count_to_listing.write(storage.listing_count.read(),(asset_id, nft_id) );
+                // log(Repayed {
+                //     lender: listings_borrowed.lender,
+                //     borrower: borrowed_data.borrower,
+                //     amount_repayed: total_cost_in_time, // Required collateral
+                //     collateral: borrowed_data.collateral,
+                //     collateral_asset_id: listings_borrowed.collateral_asset_id,
+                // });
                 true
             },
             None => false,

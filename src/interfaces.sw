@@ -2,7 +2,7 @@ library;
 use ::data_structures::{borrow::BorrowInfo, listing::Listing};
 
 abi NftLend {
-    #[storage(read, write)]
+    #[storage(read, write), payable]
     fn list_nft(
         asset_id: AssetId,
         nft_id: u64,
