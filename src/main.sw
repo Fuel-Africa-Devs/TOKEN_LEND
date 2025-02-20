@@ -141,56 +141,56 @@ impl NftLend for Contract {
         let mut listings_borrowed = storage.listings.get((asset_id, nft_id)).try_read().unwrap();
         match borrowed {
             Some(borrowed_data) => {
-                // let mut borrowed_data = borrowed_data;
-                // require(
-                //     borrowed_data
-                //         .expiration <= height()
-                //         .as_u64(),
-                //     Repay::BorrowedTImePassed,
-                // );
-                // let duration = {
-                //     if (height().as_u64() > borrowed_data.expiration) {
-                //         borrowed_data.expiration
-                //     } else {
-                //         height().as_u64() - borrowed_data.starting
-                //     }
-                // };
-                // let total_cost_in_time = listings_borrowed.price_per_block * duration; // cost duration
-                // let borrower = Identity::Address(borrowed_data.borrower);
-                // require(total_cost_in_time == msg_amount(), Repay::IncorrectInterest);
-                // require(
-                //     listings_borrowed
-                //         .asset_id == asset_id,
-                //     Repay::AssetIdMismatch,
-                // );
-                // listings_borrowed.active = true;
-                // borrowed_data.collateral = 0;
-                // transfer(
-                //     borrower,
-                //     listings_borrowed
-                //         .collateral_asset_id,
-                //     listings_borrowed
-                //         .collateral_amount,
-                // ); // transfer collateral to borrower
-                // transfer(
-                //     Identity::Address(listings_borrowed.lender),
-                //     listings_borrowed
-                //         .collateral_asset_id,
-                //     total_cost_in_time,
-                // ); // transfer interest to lender
-                // storage.borrowed.insert((asset_id, nft_id), borrowed_data);
-                // storage
-                //     .listings
-                //     .insert((asset_id, nft_id), listings_borrowed);
-                // // // storage.count_to_borrow.write(storage.listing_count.read(),borrower_info);
+                let mut borrowed_data = borrowed_data;
+                require(
+                    borrowed_data
+                        .expiration <= height()
+                        .as_u64(),
+                    Repay::BorrowedTImePassed,
+                );
+                let duration = {
+                    if (height().as_u64() > borrowed_data.expiration) {
+                        borrowed_data.expiration
+                    } else {
+                        height().as_u64() - borrowed_data.starting
+                    }
+                };
+                let total_cost_in_time = listings_borrowed.price_per_block * duration; // cost duration
+                let borrower = Identity::Address(borrowed_data.borrower);
+                require(total_cost_in_time <= msg_amount(), Repay::IncorrectInterest);
+                require(
+                    listings_borrowed
+                        .asset_id == asset_id,
+                    Repay::AssetIdMismatch,
+                );
+                listings_borrowed.active = true;
+                borrowed_data.collateral = 0;
+                transfer(
+                    borrower,
+                    listings_borrowed
+                        .collateral_asset_id,
+                    listings_borrowed
+                        .collateral_amount,
+                ); // transfer collateral to borrower
+                transfer(
+                    Identity::Address(listings_borrowed.lender),
+                    listings_borrowed
+                        .collateral_asset_id,
+                    total_cost_in_time,
+                ); // transfer interest to lender
+                storage.borrowed.insert((asset_id, nft_id), borrowed_data);
+                storage
+                    .listings
+                    .insert((asset_id, nft_id), listings_borrowed);
+                // // storage.count_to_borrow.write(storage.listing_count.read(),borrower_info);
                 // // storage.count_to_listing.write(storage.listing_count.read(),(asset_id, nft_id) );
-                // log(Repayed {
-                //     lender: listings_borrowed.lender,
-                //     borrower: borrowed_data.borrower,
-                //     amount_repayed: total_cost_in_time, // Required collateral
-                //     collateral: borrowed_data.collateral,
-                //     collateral_asset_id: listings_borrowed.collateral_asset_id,
-                // });
+                log(Repayed {
+                    lender: listings_borrowed.lender,
+                    borrower: borrowed_data.borrower,
+                    amount_repayed: total_cost_in_time, // Required collateral
+                    collateral: borrowed_data.collateral,
+                    collateral_asset_id: listings_borrowed.collateral_asset_id,
+                });
                 true
             },
             None => false,

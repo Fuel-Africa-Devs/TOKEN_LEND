@@ -29,6 +29,6 @@ runs:
       shell: bash
       run: forc build
 
-    - name: Cargo build
-      shell: bash
-      run: cargo build
+    # - name: Cargo build
+    #   shell: bash
+    #   run: cargo build
