@@ -138,7 +138,7 @@ impl NftLend for Contract {
     #[storage(read, write), payable]
     fn return_nft(asset_id: AssetId, nft_id: u64) -> bool {
         let borrowed = storage.borrowed.get((asset_id, nft_id)).try_read();
-        let mut listings_borrowed = storage.listings.get((asset_id, nft_id)).try_read().unwrap_or_default();
+        let mut listings_borrowed = storage.listings.get((asset_id, nft_id)).try_read().unwrap();
         match borrowed {
             Some(borrowed_data) => {
                 // let mut borrowed_data = borrowed_data;
