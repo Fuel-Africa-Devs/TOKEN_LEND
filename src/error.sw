@@ -1,6 +1,6 @@
 library;
 pub enum List {
-    AssetAmountMismatch:(),
+    AssetAmountMismatch: (),
 }
 pub enum Borrow {
     CollateralMisMatch: (),
@@ -10,6 +10,6 @@ pub enum Borrow {
 
 pub enum Repay {
     BorrowedTImePassed: (),
-    IncorrectInterest: (),
+    IncorrectInterest: u64,
     AssetIdMismatch: (),
 }
